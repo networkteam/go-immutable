@@ -3,8 +3,6 @@ package immutable
 import (
 	"fmt"
 	"strings"
-
-	"github.com/rsms/go-bits"
 )
 
 const intSize uint = 32 << (^uint(0) >> 63) // bits of int on target platform
@@ -42,7 +40,7 @@ func (m *HAMT) Lookup(key uint, v Value) Value {
 		}
 		// Compare to value at m.entries[bi]
 		// where bi is the bucket index by mapping index bit -> bucket index.
-		switch e := m.entries[bits.Bitindex(m.bmap, bitpos)].(type) {
+		switch e := m.entries[bitindex(m.bmap, bitpos)].(type) {
 		case *HAMT:
 			m = e
 		case hcollision:
@@ -66,7 +64,7 @@ func (m *HAMT) Lookup(key uint, v Value) Value {
 // resized is decremented by 1 in case the operation replaced an existing entry.
 func (m *HAMT) Insert(shift, key uint, v Value, resized *int) *HAMT {
 	bitpos := uint(1) << ((key >> shift) & hamtMask) // key bit position
-	bi := bits.Bitindex(m.bmap, bitpos)              // bucket index
+	bi := bitindex(m.bmap, bitpos)                   // bucket index
 	// Now, one of three cases may be encountered:
 	//
 	// 1. The entry is empty indicating that the key is not in the tree.
@@ -135,7 +133,7 @@ func (m *HAMT) Remove(key uint, v Value) *HAMT {
 func (m *HAMT) remove(shift, key uint, v2 Value, hasCollision *bool) *HAMT {
 	bitpos := uint(1) << ((key >> shift) & hamtMask) // key bit position
 	if m.bmap&bitpos != 0 {
-		bi := bits.Bitindex(m.bmap, bitpos)
+		bi := bitindex(m.bmap, bitpos)
 		switch e := m.entries[bi].(type) {
 		case *HAMT:
 			// enter branch, calling remove() recursively, then either collapse the path into just
